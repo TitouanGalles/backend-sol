@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 const userRoutes = require('./routes/Users');
 const User = require('./models/User');
 const Game = require('./models/Games');
@@ -9,7 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/pile-ou-face');
+// Connexion MongoDB
+mongoose.connect('mongodb://127.0.0.1:27017/pile-ou-face', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'Erreur de connexion MongoDB :'));
@@ -17,9 +22,10 @@ db.once('open', () => {
   console.log('✅ Connecté à MongoDB');
 });
 
+// Routes API
 app.use('/users', userRoutes);
 
-// Création d’une partie avec pseudo du joueur
+// Création d’une partie
 app.post('/games', async (req, res) => {
   const { player, choice, amount } = req.body;
 
@@ -60,7 +66,7 @@ app.get('/games', async (req, res) => {
   }
 });
 
-// Rejoindre une partie et sauvegarder l’opposant avec pseudo
+// Rejoindre une partie
 app.post('/games/:id/join', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
@@ -90,12 +96,7 @@ app.post('/games/:id/join', async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
-});
-
-// GET /games/:id pour récupérer une partie précise
+// Récupérer une partie précise
 app.get('/games/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
@@ -104,4 +105,19 @@ app.get('/games/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
+});
+
+
+// 🔥 Partie Angular (static frontend)
+// Remplace "pile-ou-face" par le nom exact du dossier dans `dist/` après build Angular
+const angularAppPath = path.join(__dirname, '../frontend/dist/pile-ou-face');
+app.use(express.static(angularAppPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(angularAppPath, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur en écoute sur http://localhost:${PORT}`);
 });
