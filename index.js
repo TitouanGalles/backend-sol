@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const path = require('path');
 const userRoutes = require('./routes/Users');
 const User = require('./models/User');
 const Game = require('./models/Games');
@@ -10,11 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connexion MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pile-ou-face', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect('mongodb://127.0.0.1:27017/pile-ou-face');
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'Erreur de connexion MongoDB :'));
@@ -22,10 +17,9 @@ db.once('open', () => {
   console.log('✅ Connecté à MongoDB');
 });
 
-// Routes API
 app.use('/users', userRoutes);
 
-// Création d’une partie
+// Création d’une partie avec pseudo du joueur
 app.post('/games', async (req, res) => {
   const { player, choice, amount } = req.body;
 
@@ -66,7 +60,7 @@ app.get('/games', async (req, res) => {
   }
 });
 
-// Rejoindre une partie
+// Rejoindre une partie et sauvegarder l’opposant avec pseudo
 app.post('/games/:id/join', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
@@ -96,29 +90,18 @@ app.post('/games/:id/join', async (req, res) => {
   }
 });
 
-// Récupérer une partie précise
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
+});
+
+// GET /games/:id pour récupérer une partie précise
 app.get('/games/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id);
     if (!game) return res.status(404).json({ error: 'Partie introuvable' });
     res.json(game);
   } catch (err) {
-    console.error('Erreur récupération partie:', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
-});
-
-// 🔥 Servir le frontend statique dans /public (le build Angular)
-const frontendPath = path.join(__dirname, 'public');
-app.use(express.static(frontendPath));
-
-// Toutes les autres routes redirigent vers index.html pour Angular
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
-
-// PORT dynamique pour Render ou fallback local
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur en écoute sur http://localhost:${PORT}`);
 });
