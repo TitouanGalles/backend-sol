@@ -108,14 +108,13 @@ app.get('/games/:id', async (req, res) => {
   }
 });
 
-// 🔥 Servir l'app Angular compilée (frontend statique)
-// Ajuste ce chemin en fonction de la sortie `ng build` de ton projet Angular
-const angularAppPath = path.join(__dirname, '../frontend/dist/frontend');
-app.use(express.static(angularAppPath));
+// 🔥 Servir le frontend statique dans /public (le build Angular)
+const frontendPath = path.join(__dirname, 'public');
+app.use(express.static(frontendPath));
 
-// Redirige toutes les routes vers Angular (pour le routing client)
+// Toutes les autres routes redirigent vers index.html pour Angular
 app.get('*', (req, res) => {
-  res.sendFile(path.join(angularAppPath, 'index.html'));
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // PORT dynamique pour Render ou fallback local
