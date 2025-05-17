@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Connexion MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/pile-ou-face', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pile-ou-face', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -103,20 +103,22 @@ app.get('/games/:id', async (req, res) => {
     if (!game) return res.status(404).json({ error: 'Partie introuvable' });
     res.json(game);
   } catch (err) {
+    console.error('Erreur récupération partie:', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-
-// 🔥 Partie Angular (static frontend)
-// Remplace "pile-ou-face" par le nom exact du dossier dans `dist/` après build Angular
-const angularAppPath = path.join(__dirname, '../frontend/dist/pile-ou-face');
+// 🔥 Servir l'app Angular compilée (frontend statique)
+// Ajuste ce chemin en fonction de la sortie `ng build` de ton projet Angular
+const angularAppPath = path.join(__dirname, '../frontend/dist/frontend');
 app.use(express.static(angularAppPath));
 
+// Redirige toutes les routes vers Angular (pour le routing client)
 app.get('*', (req, res) => {
   res.sendFile(path.join(angularAppPath, 'index.html'));
 });
 
+// PORT dynamique pour Render ou fallback local
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur en écoute sur http://localhost:${PORT}`);
