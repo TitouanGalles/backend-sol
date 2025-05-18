@@ -1,4 +1,4 @@
-require('dotenv').config(); // Pour charger .env
+require('dotenv').config(); // Charge les variables .env
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,11 +11,19 @@ app.use(cors());
 app.use(express.json());
 
 // Connexion MongoDB depuis variable d'environnement
-const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pile-ou-face';
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  console.error("❌ MONGO_URI non défini dans les variables d'environnement !");
+  process.exit(1);
+}
 
 mongoose.connect(mongoURI)
-  .then(() => console.log('✅ Connecté à MongoDB'))
-  .catch(err => console.error('Erreur de connexion MongoDB :', err));
+  .then(() => console.log('✅ Connecté à MongoDB Atlas'))
+  .catch(err => {
+    console.error('❌ Erreur de connexion MongoDB :', err);
+    process.exit(1);
+  });
 
 app.use('/users', userRoutes);
 
@@ -103,5 +111,5 @@ app.get('/games/:id', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
+  console.log(`🚀 Backend en écoute sur port ${PORT}`);
 });
