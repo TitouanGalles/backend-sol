@@ -13,10 +13,7 @@ app.use(express.json());
 // Connexion MongoDB depuis variable d'environnement
 const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pile-ou-face';
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(mongoURI)
   .then(() => console.log('✅ Connecté à MongoDB'))
   .catch(err => console.error('Erreur de connexion MongoDB :', err));
 
