@@ -1,3 +1,4 @@
+require('dotenv').config(); // Pour charger .env
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -9,13 +10,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/pile-ou-face');
+// Connexion MongoDB depuis variable d'environnement
+const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pile-ou-face';
 
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'Erreur de connexion MongoDB :'));
-db.once('open', () => {
-  console.log('✅ Connecté à MongoDB');
-});
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('✅ Connecté à MongoDB'))
+  .catch(err => console.error('Erreur de connexion MongoDB :', err));
 
 app.use('/users', userRoutes);
 
@@ -90,11 +93,6 @@ app.post('/games/:id/join', async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
-});
-
 // GET /games/:id pour récupérer une partie précise
 app.get('/games/:id', async (req, res) => {
   try {
@@ -104,4 +102,9 @@ app.get('/games/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
 });
