@@ -166,7 +166,7 @@ app.post('/games/:id/finish', async (req, res) => {
     game.status = 'finished';
 
     // Transfert depuis wallet du jeu vers gagnant
-    const totalAmount = game.amount * 2; // mise totale
+    const totalAmount = game.amount * 1.9; // mise totale
 
     try {
       console.log("Gagnant déterminé :", winner);
