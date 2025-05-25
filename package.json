@@ -14,12 +14,13 @@
   "type": "commonjs",
   "dependencies": {
     "@solana/web3.js": "^1.98.2",
-    "bs58": "^6.0.0",
+    "bs58": "^4.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "mongoose": "^8.15.0",
     "node-fetch": "^3.3.2",
+    "socket.io": "^4.8.1",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
