@@ -10,6 +10,7 @@ const gameSchema = new mongoose.Schema({
   opponentPseudo: String,                         // pseudo de l’adversaire ✅ AJOUT ICI
   result: String,
   winner: String,
+  lock: {type: Boolean, default: false}
 });
 
 module.exports = mongoose.model('Game', gameSchema);

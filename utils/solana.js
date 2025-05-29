@@ -13,7 +13,7 @@ const secretKey = Uint8Array.from(JSON.parse(process.env.GAME_WALLET_SECRET));
 const gameWallet = Keypair.fromSecretKey(secretKey);
 
 // ⚡ Connection RPC
-const connection = new Connection('https://api.mainnet-beta.solana.com');
+const connection = new Connection('https://mainnet.helius-rpc.com/?api-key=cb2851f0-e2d7-481a-97f1-04403000595e');
 
 async function sendSolToWinner(recipientWallet, amountSol) {
   const recipient = new PublicKey(recipientWallet);

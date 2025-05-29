@@ -34,6 +34,13 @@ mongoose.connect(mongoURI)
 io.on('connection', (socket) => {
   console.log('Client connecté, id:', socket.id);
 
+  const sendWaitingGames = async () => {
+    const waitingGames = await Game.find({ status: 'waiting' });
+    socket.emit('waiting-games', waitingGames);
+  };
+
+  socket.on('request-waiting-games', sendWaitingGames);
+
   // Le client rejoint une room correspondant à l'id de la partie
   socket.on('join-game-room', (gameId) => {
     console.log(`Socket ${socket.id} rejoint la room ${gameId}`);
@@ -50,6 +57,7 @@ app.use('/users', userRoutes);
 
 // ▶ Créer une partie
 app.post('/games', async (req, res) => {
+  
   const { player, choice, amount } = req.body;
   if (!player || !choice || !amount) {
     return res.status(400).json({ error: 'Champs manquants' });
@@ -68,6 +76,7 @@ app.post('/games', async (req, res) => {
     });
 
     await game.save();
+    io.emit('game-created', game);
     res.status(201).json(game);
   } catch (error) {
     console.error('Erreur création game :', error);
@@ -106,6 +115,7 @@ app.post('/games/:id/join', async (req, res) => {
 
     // Émission de l'événement uniquement aux clients dans la room de la partie
     io.to(req.params.id).emit('player-joined', game);
+    io.emit('game-updated', game);
 
     res.json(game);
   } catch (error) {
@@ -190,6 +200,73 @@ app.post('/games/:id/finish', async (req, res) => {
   }
 });
 
+app.post('/api/games/lock/:id', async (req, res) => {
+  try {
+    const game = await Game.findById(req.params.id);
+    if (!game || game.lock || game.opponentPseudo) {
+      return res.status(403).json({ message: 'Déjà verrouillée ou rejointe' });
+    }
+    game.lock = true;
+    await game.save();
+    io.emit('game-updated', game);
+    res.status(200).json({ message: 'Verrouillée' });
+  } catch (e) {
+    res.status(500).json({ message: 'Erreur serveur lors du lock' });
+  }
+});
+
+app.post('/api/games/unlock/:id', async (req, res) => {
+  try {
+    const game = await Game.findById(req.params.id);
+    if (game) {
+      game.lock = false;
+      await game.save();
+      io.emit('game-updated', game);
+      res.status(200).json({ message: 'Déverrouillée' });
+    } else {
+      res.status(404).json({ message: 'Partie introuvable' });
+    }
+  } catch (e) {
+    res.status(500).json({ message: 'Erreur serveur lors du unlock' });
+  }
+});
+
+app.delete('/api/games/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    // Récupérer la partie avant suppression
+    const game = await Game.findById(id);
+    if (!game) {
+      return res.status(404).json({ message: 'Partie non trouvée' });
+    }
+
+    // Vérifier si un adversaire a rejoint (exemple: game.player2)
+    if (game.opponent) {
+      return res.status(400).json({ message: 'Impossible d\'annuler, la partie a déjà un adversaire' });
+    }
+
+    // Calcul du montant à rembourser (95% de la mise)
+    const totalAmount = game.amount * 0.95;
+
+    try {
+      // Appel de ta fonction d'envoi SOL
+      const txSignature = await sendSolToWinner(game.player, totalAmount);
+      game.transaction = txSignature; // Optionnel, si tu veux garder la trace dans DB (avant suppression ?)
+    } catch (err) {
+      console.error('Erreur transaction SOL :', err);
+      return res.status(500).json({ error: 'Transaction échouée', detail: err.message });
+    }
+
+    // Suppression de la partie
+    await GameModel.findByIdAndDelete(id);
+
+    res.status(200).send({ message: 'Partie supprimée et remboursement effectué' });
+
+  } catch (error) {
+    console.error('Erreur suppression partie :', error);
+    res.status(500).send({ message: 'Erreur suppression partie' });
+  }
+});
 
 
 // ▶ Lancer le serveur HTTP + WebSocket

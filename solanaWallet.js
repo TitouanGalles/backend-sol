@@ -13,7 +13,7 @@ const senderKeypair = Keypair.fromSecretKey(secretKey);
 // Clé publique (optionnelle, souvent déduite de la clé privée)
 const senderPublicKey = process.env.SOLANA_GAME_WALLET_PUBLIC || senderKeypair.publicKey.toBase58();
 
-const connection = new Connection('https://powerful-necessary-breeze.solana-mainnet.quiknode.pro/fab7e8bb4d07de3b4d88a3a62363907c6f408570/', 'confirmed');
+const connection = new Connection('https://mainnet.helius-rpc.com/?api-key=cb2851f0-e2d7-481a-97f1-04403000595e', 'confirmed');
 
 async function sendSolToWinner(winnerWalletBase58, amountSol) {
   const recipientPublicKey = new PublicKey(winnerWalletBase58);
