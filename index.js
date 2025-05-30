@@ -2,20 +2,34 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const http = require('http');
+const { Server } = require('socket.io');
+
 const userRoutes = require('./routes/Users');
+const reflexRoutes = require('./routes/reflexRoutes');
 const User = require('./models/User');
 const Game = require('./models/Games');
 
 const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: '*' },
+});
+
+// Expose io to routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 app.use(cors());
 app.use(express.json());
 
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require('socket.io');
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
+// Routes
+app.use('/users', userRoutes);
+app.use(reflexRoutes);
+app.set('io', io);
 
 // Connexion MongoDB
 const mongoURI = process.env.MONGO_URI;
@@ -34,6 +48,7 @@ mongoose.connect(mongoURI)
 io.on('connection', (socket) => {
   console.log('Client connecté, id:', socket.id);
 
+  // Envoi liste parties waiting
   const sendWaitingGames = async () => {
     const waitingGames = await Game.find({ status: 'waiting' });
     socket.emit('waiting-games', waitingGames);
@@ -41,7 +56,6 @@ io.on('connection', (socket) => {
 
   socket.on('request-waiting-games', sendWaitingGames);
 
-  // Le client rejoint une room correspondant à l'id de la partie
   socket.on('join-game-room', (gameId) => {
     console.log(`Socket ${socket.id} rejoint la room ${gameId}`);
     socket.join(gameId);
@@ -276,3 +290,6 @@ server.listen(PORT, () => {
 });
 
 
+
+
+  

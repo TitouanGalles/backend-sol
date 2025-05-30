@@ -26,6 +26,7 @@ router.get('/:wallet', async (req, res) => {
     const user = await User.findOne({ wallet: req.params.wallet });
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
     res.json(user);
+    console.log(user);
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
