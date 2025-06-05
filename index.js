@@ -9,6 +9,7 @@ const userRoutes = require('./routes/Users');
 const reflexRoutes = require('./routes/reflexRoutes');
 const User = require('./models/User');
 const Game = require('./models/Games');
+const ReflexGame = require('./models/ReflexGameModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,6 +56,15 @@ io.on('connection', (socket) => {
   };
 
   socket.on('request-waiting-games', sendWaitingGames);
+
+  socket.on('request-waiting-reflexGames', async () => {
+    try {
+      const waitingReflexGames = await ReflexGame.find({ status: 'waiting' });
+      socket.emit('waiting-reflexGames', waitingReflexGames);
+    } catch (error) {
+      console.error('Erreur récupération reflex games:', error);
+    }
+  });
 
   socket.on('join-game-room', (gameId) => {
     console.log(`Socket ${socket.id} rejoint la room ${gameId}`);
