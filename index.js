@@ -282,7 +282,8 @@ app.delete('/api/games/:id', async (req, res) => {
     }
 
     // Suppression de la partie
-    await GameModel.findByIdAndDelete(id);
+    await Game.findByIdAndDelete(id);
+    io.emit('gameSupp');
 
     res.status(200).send({ message: 'Partie supprimée et remboursement effectué' });
 

@@ -53,6 +53,7 @@ router.post('/api/reflex/join/:id', async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.to(req.params.id).emit('player-joined-reflex', game);
+      io.emit('game-updated-reflex', game);
       //io.emit('reflexGame-updated', game);  // Émet à tous les clients
     }
     console.log("rejoint : ", game);
@@ -92,6 +93,7 @@ router.post('/api/reflex/end/:id', async (req, res) => {
     // Notifie les clients via Socket.IO
     if (io) {
       io.to(gameId).emit('game-finished-reflex', game);
+      io.emit('game-updated-reflex', game);
     }
 
     res.status(200).json(game);
